@@ -6,24 +6,24 @@
 
 ---
 
-## 🌟 主な特徴
+## 主な特徴
 
-- 🔒 **Cookieフリー（Cookie-less）設計**:
+- **Cookieフリー（Cookie-less）設計**:
   ブラウザの Cookie 保存域や Cookie ヘッダーを一切使用しないため、CSRF（クロスサイトリクエストフォージェリ）攻撃の根本的な対策になります。
-- 📦 **IndexedDBによるトークン永続化**:
+- **IndexedDBによるトークン永続化**:
   トークン（JWT等）はブラウザのセキュアなストレージである IndexedDB で安全に管理されます。
-- ⚙️ **Service Workerによる透過的なリクエストインターセプト**:
+- **Service Workerによる透過的なリクエストインターセプト**:
   Service Worker がページ遷移（RSCデータフェッチ含む）や API リクエストをインターセプトし、IndexedDB 内のトークンを `Authorization: Bearer <token>` ヘッダーとして動的に注入して転送します。
-- 🖥️ **SSR (Server-Side Rendering)**:
+- **SSR (Server-Side Rendering)**:
   Next.js サーバーは、渡された Authorization ヘッダーを読み取り、サーバーサイドで直接認証状態を検証して、HTMLを動的に構築します。
-- 🔗 **単一アドレス (/) による画面制御**:
+- **単一アドレス (/) による画面制御**:
   URLは常に `http://localhost:3000/` のまま遷移しません。認証されていれば `<DashboardView />`、未認証なら `<LoginForm />` をサーバー側で出し分けて返却します。
-- 🎨 **プレミアム・サイバーグリーンテーマ**:
+- **プレミアム・サイバーグリーンテーマ**:
   グラスモーフィズムや滑らかなアニメーションを取り入れた、視覚的に優れたダーク/グリーンのモダンUIです。
 
 ---
 
-## 🔄 認証フローの概要 (シーケンス)
+## 認証フローの概要 (シーケンス)
 
 ```mermaid
 sequenceDiagram
@@ -58,7 +58,7 @@ sequenceDiagram
 
 ---
 
-## 🚀 クイックスタート
+## クイックスタート
 
 ### 1. 依存関係のインストール
 ```bash
@@ -73,14 +73,14 @@ npm run dev
 
 ---
 
-## 💡 デモの動作確認方法
+## デモの動作確認方法
 
 ### テストアカウント
 - **ユーザー名**: `admin`
 - **パスワード**: `password`
 （ログイン画面には最初から自動入力されています。「Authenticate」をクリックするだけでログインできます）
 
-### 🔍 開発者ツール (DevTools) を使った検証ポイント
+### 開発者ツール (DevTools) を使った検証ポイント
 
 1. **Cookieが空であることの確認**:
    - DevTools を開き、**「Application」タブ ->「Storage」->「Cookies」** を確認します。
@@ -91,15 +91,15 @@ npm run dev
 3. **Service Workerによるヘッダーの注入**:
    - ログイン完了後の画面（ダッシュボード）でページをリロードし、**「Network」タブ** でドキュメント（名前が `/` または `localhost` のHTMLリクエスト）を選択します。
    - **「Request Headers (リクエストヘッダー)」** を確認すると、`Authorization: Bearer mock-session-token-xyz789` が Service Worker によって動的に追加されていることが確認できます。
-4. **URLの確認**:
+4. **URL of the Page**:
    - ログイン状態のオンオフに関わらず、ブラウザのアドレスバーは常に `http://localhost:3000/` のまま不変です。
 
 ---
 
-## 🛠️ 主要なコード解説
+## 主要なコード解説
 
 - **[src/utils/db.ts](file:///c:/prog/test/next/next-worker-auth/src/utils/db.ts)**
-  ブラウザのメインスレッドと Service Worker の両環境で動作する、IndexedDB の非同期読み書きユーティリティ。
+  ブラウザのメインスレッド and Service Worker の両環境で動作する、IndexedDB の非同期読み書きユーティリティ。
 - **[public/sw.js](file:///c:/prog/test/next/next-worker-auth/public/sw.js)**
   ページ遷移（`mode: 'navigate'`）、APIへの通信、Next.jsのRSC（React Server Components）フェッチを傍受し、IndexedDBからトークンを取得してヘッダーを注入する。
 - **[src/components/ServiceWorkerRegister.tsx](file:///c:/prog/test/next/next-worker-auth/src/components/ServiceWorkerRegister.tsx)**
