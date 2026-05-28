@@ -19,7 +19,7 @@ export async function GET(request: Request) {
         name: 'Demo Admin',
         role: 'Administrator',
         email: 'admin@demo-sandbox.io',
-        bio: 'This profile is served via secure SSR rendered dynamic HTML. The auth token was securely transmitted inside the headers by Service Worker intercepting the navigation request from IndexedDB.',
+        bio: 'This profile is served via SSR-rendered dynamic HTML. The Authorization header was added by the Service Worker after reading the demo token from IndexedDB.',
       },
     });
   }

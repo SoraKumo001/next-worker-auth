@@ -1,29 +1,24 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { setItem, removeItem } from '@/utils/db';
+import React, { useState } from 'react';
+import { setItem } from '@/utils/db';
+import { useServiceWorkerStatus } from '@/components/ServiceWorkerRegister';
 
 export default function LoginForm() {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('password');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    // If the login form is rendered, it means the server verified that the user is unauthenticated.
-    // Clean up any stale or invalid token in client-side IndexedDB to prevent confusion.
-    const clearStaleToken = async () => {
-      try {
-        await removeItem('accessToken');
-      } catch (err) {
-        console.error('[LoginForm] Failed to clear stale token:', err);
-      }
-    };
-    clearStaleToken();
-  }, []);
+  const swStatus = useServiceWorkerStatus();
+  const canAuthenticate = swStatus === 'active' && !loading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canAuthenticate) {
+      setError('Service Worker is not controlling this page yet. Please wait a moment and try again.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -37,7 +32,8 @@ export default function LoginForm() {
       const data = await res.json();
 
       if (data.success) {
-        // Save the received token securely inside IndexedDB
+        // Store the demo access token in IndexedDB. This is intentionally readable by JS,
+        // so real applications still need short-lived tokens and strong XSS defenses.
         await setItem('accessToken', data.token);
         
         console.log('[LoginForm] Token stored. Triggering page reload for SW interception...');
@@ -61,8 +57,14 @@ export default function LoginForm() {
       <div className="card">
         <h1 className="card-title">SW Auth Sandbox</h1>
         <p className="card-subtitle">
-          Single-URL Next.js SSR Auth demo using Service Worker header injection & IndexedDB.
+          Single-URL Next.js SSR Auth demo where the authenticated HTML is rendered with data already resolved on the server.
         </p>
+
+        {swStatus !== 'active' && (
+          <div className="notice-banner">
+            Service Worker is {swStatus}. The first document request cannot be intercepted, so authentication is enabled after this page is under SW control.
+          </div>
+        )}
 
         {error && <div className="error-banner">{error}</div>}
 
@@ -99,8 +101,8 @@ export default function LoginForm() {
             />
           </div>
 
-          <button className="btn" type="submit" disabled={loading}>
-            {loading ? 'Decrypting Session...' : 'Authenticate'}
+          <button className="btn" type="submit" disabled={!canAuthenticate}>
+            {loading ? 'Authenticating...' : swStatus === 'active' ? 'Authenticate' : 'Waiting for Service Worker'}
           </button>
         </form>
 

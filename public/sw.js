@@ -2,17 +2,14 @@ const DB_NAME = 'next-sw-auth-db';
 const STORE_NAME = 'auth-store';
 const DB_VERSION = 1;
 
-// Service Worker install - immediate activation
 self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
-// Service Worker activate - take control of all clients immediately
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// Helper to retrieve token from IndexedDB
 function getTokenFromIndexedDB() {
   return new Promise((resolve) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -29,7 +26,7 @@ function getTokenFromIndexedDB() {
         const getRequest = store.get('accessToken');
         getRequest.onsuccess = () => resolve(getRequest.result || null);
         getRequest.onerror = () => resolve(null);
-      } catch (e) {
+      } catch {
         resolve(null);
       }
     };
@@ -42,56 +39,50 @@ function getTokenFromIndexedDB() {
   });
 }
 
-// Intercept fetch requests
+function shouldAttachAuthHeader(request, url) {
+  if (url.origin !== self.location.origin) {
+    return false;
+  }
+
+  if (
+    url.pathname.startsWith('/_next/static/') ||
+    url.pathname.includes('/webpack-hmr') ||
+    url.pathname.includes('.')
+  ) {
+    return false;
+  }
+
+  const isDocumentNavigation = request.mode === 'navigate';
+  const isApiRequest = url.pathname.startsWith('/api/');
+  const isRscRequest = request.headers.has('RSC') || url.searchParams.has('_rsc');
+
+  return isDocumentNavigation || isApiRequest || isRscRequest;
+}
+
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Only intercept same-origin requests
-  if (url.origin !== self.location.origin) {
+  if (!shouldAttachAuthHeader(event.request, url)) {
     return;
   }
 
-  // Skip static assets, specific build bundles, and hot reloading websockets
-  if (
-    url.pathname.startsWith('/_next/static/') || 
-    url.pathname.includes('.') || 
-    url.pathname.includes('/webpack-hmr')
-  ) {
-    return;
-  }
-
-  // Intercept all other same-origin requests (HTML document navigate, API, and Next.js RSC fetches)
   event.respondWith(
     (async () => {
       const token = await getTokenFromIndexedDB();
-
-      // Clone the headers and inject the authorization token if exists
       const headers = new Headers(event.request.headers);
+
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
       }
 
-      // Construct modified request options
-      const requestInit = {
-        method: event.request.method,
-        headers: headers,
-        credentials: event.request.credentials,
-        mode: event.request.mode === 'navigate' ? 'same-origin' : event.request.mode,
-      };
-
-      // Navigate requests are GET, but APIs can be POST/PUT with body
-      if (event.request.method !== 'GET' && event.request.method !== 'HEAD') {
-        try {
-          requestInit.body = await event.request.clone().blob();
-        } catch (e) {
-          console.error('[SW] Failed to clone request body:', e);
-        }
+      const requestInit = { headers };
+      if (event.request.mode === 'navigate') {
+        requestInit.mode = 'same-origin';
       }
 
       try {
-        // Send modified request with Authorization header
-        const response = await fetch(event.request.url, requestInit);
-        return response;
+        const requestWithAuth = new Request(event.request, requestInit);
+        return fetch(requestWithAuth);
       } catch (error) {
         console.error('[SW] Fetch proxy failed, falling back to original request:', error);
         return fetch(event.request);

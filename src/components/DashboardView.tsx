@@ -12,9 +12,15 @@ interface DashboardViewProps {
   token: string;
   user: User;
   cookieDisplay: string;
+  ssrProof: {
+    renderedAt: string;
+    route: string;
+    authHeaderPresent: boolean;
+    dataSource: string;
+  };
 }
 
-export default function DashboardView({ token, user, cookieDisplay }: DashboardViewProps) {
+export default function DashboardView({ token, user, cookieDisplay, ssrProof }: DashboardViewProps) {
   return (
     <div className="page-container">
       <div className="card" style={{ maxWidth: '640px' }}>
@@ -27,16 +33,43 @@ export default function DashboardView({ token, user, cookieDisplay }: DashboardV
         </div>
 
         <div className="cookie-status-panel">
-          <span className="cookie-status-label">🍪 Active Document Cookies:</span>
+          <span className="cookie-status-label">Document Cookies (ignored for auth):</span>
           <span className="cookie-status-value">{cookieDisplay}</span>
         </div>
 
         <div className="info-grid">
+          <div className="info-item ssr-proof">
+            <div className="info-label">HTML Output State</div>
+            <div className="info-value">
+              User data was resolved on the server before this HTML was returned.
+            </div>
+            <dl className="proof-list">
+              <div>
+                <dt>Route</dt>
+                <dd>{ssrProof.route}</dd>
+              </div>
+              <div>
+                <dt>Authorization header</dt>
+                <dd>{ssrProof.authHeaderPresent ? 'present during SSR' : 'missing'}</dd>
+              </div>
+              <div>
+                <dt>Rendered at</dt>
+                <dd>
+                  <time dateTime={ssrProof.renderedAt}>{ssrProof.renderedAt}</time>
+                </dd>
+              </div>
+              <div>
+                <dt>Data source</dt>
+                <dd>{ssrProof.dataSource}</dd>
+              </div>
+            </dl>
+          </div>
+
           <div className="info-item">
             <div className="info-label">Authentication Method</div>
             <div className="info-value" style={{ display: 'flex', alignItems: 'center' }}>
               Service Worker Authorization Header
-              <span className="badge-green">Cookie-free</span>
+              <span className="badge-green">No auth cookie</span>
             </div>
           </div>
 
@@ -65,9 +98,9 @@ export default function DashboardView({ token, user, cookieDisplay }: DashboardV
         <div className="tech-explanation">
           <h4>How Single-URL SSR Auth works:</h4>
           <p>1. When you authenticated, the token was saved to <strong>IndexedDB</strong>, and the page was reloaded.</p>
-          <p>2. During the reload request (GET <code>/</code>), the <strong>Service Worker</strong> intercepted the request.</p>
-          <p>3. The Service Worker read the token from IndexedDB, cloned the request, appended the <code>Authorization: Bearer [token]</code> header, and forwarded the request to the Next.js backend.</p>
-          <p>4. The Next.js SSR Server processed the request on the root route (<code>/</code>), extracted the header, verified the user, and rendered this Dashboard UI—<strong>all under the same URL</strong>.</p>
+          <p>2. During the reload request (GET <code>/</code>), the active <strong>Service Worker</strong> intercepted the navigation request.</p>
+          <p>3. The Service Worker read the token from IndexedDB, copied the request headers, appended the <code>Authorization: Bearer [token]</code> header, and forwarded the request to the Next.js backend.</p>
+          <p>4. The Next.js SSR Server processed the request on the root route (<code>/</code>), extracted the header, verified the user, and returned HTML that already contains this Dashboard data—<strong>all under the same URL</strong>.</p>
         </div>
 
         <LogoutButton />

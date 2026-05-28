@@ -20,7 +20,7 @@ function getDB(): Promise<IDBDatabase> {
   });
 }
 
-export async function setItem(key: string, value: any): Promise<void> {
+export async function setItem(key: string, value: unknown): Promise<void> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
     const transaction = db.transaction(STORE_NAME, 'readwrite');
@@ -41,7 +41,7 @@ export async function getItem<T>(key: string): Promise<T | null> {
       request.onsuccess = () => resolve(request.result || null);
       request.onerror = () => reject(request.error);
     });
-  } catch (error) {
+  } catch {
     return null;
   }
 }
