@@ -9,17 +9,13 @@
 ## 主な特徴
 
 - **Cookieフリー（Cookie-less）設計**:
-  ブラウザの Cookie 保存域や Cookie ヘッダーを一切使用しないため、CSRF（クロスサイトリクエストフォージェリ）攻撃の根本的な対策になります。
+  ブラウザの Cookie 保存域や Cookie ヘッダーを一切使用しません。
 - **IndexedDBによるトークン永続化**:
   トークン（JWT等）はブラウザのセキュアなストレージである IndexedDB で安全に管理されます。
 - **Service Workerによる透過的なリクエストインターセプト**:
   Service Worker がページ遷移（RSCデータフェッチ含む）や API リクエストをインターセプトし、IndexedDB 内のトークンを `Authorization: Bearer <token>` ヘッダーとして動的に注入して転送します。
 - **SSR (Server-Side Rendering)**:
   Next.js サーバーは、渡された Authorization ヘッダーを読み取り、サーバーサイドで直接認証状態を検証して、HTMLを動的に構築します。
-- **単一アドレス (/) による画面制御**:
-  URLは常に `http://localhost:3000/` のまま遷移しません。認証されていれば `<DashboardView />`、未認証なら `<LoginForm />` をサーバー側で出し分けて返却します。
-- **プレミアム・サイバーグリーンテーマ**:
-  グラスモーフィズムや滑らかなアニメーションを取り入れた、視覚的に優れたダーク/グリーンのモダンUIです。
 
 ---
 
@@ -61,14 +57,17 @@ sequenceDiagram
 ## クイックスタート
 
 ### 1. 依存関係のインストール
+
 ```bash
 npm install
 ```
 
 ### 2. 開発サーバーの起動
+
 ```bash
 npm run dev
 ```
+
 起動後、ブラウザで [http://localhost:3000](http://localhost:3000) を開きます。
 
 ---
@@ -76,9 +75,10 @@ npm run dev
 ## デモの動作確認方法
 
 ### テストアカウント
+
 - **ユーザー名**: `admin`
 - **パスワード**: `password`
-（ログイン画面には最初から自動入力されています。「Authenticate」をクリックするだけでログインできます）
+  （ログイン画面には最初から自動入力されています。「Authenticate」をクリックするだけでログインできます）
 
 ### 開発者ツール (DevTools) を使った検証ポイント
 
